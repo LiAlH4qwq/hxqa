@@ -2,7 +2,7 @@
 
 Human readable and eXtendable Question Answer pairs format
 
-A simple, clear, and user-friendly format which can be compile to jsonl for AI fine-tuning usage，free you from contacting with jsonl directly
+A simple, clear, and user-friendly format which can be compile to jsonl for AI fine-tuning usage, free you from contacting with jsonl directly
 
 # Basic Syntax
 
