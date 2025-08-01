@@ -1,13 +1,29 @@
 import * as lexer from "./hxqa/lexer"
 import * as parser from "./hxqa/parser"
+import * as analyzer from "./hxqa/analyzer"
+import * as generator from "./jsonl/generator"
 const hxqa = `
 ::: system prompt
 <<< user input
 >>>
 ai output
+/// comment
+:::
+sys
+line
+<<< user ask
+>>>
+balabala
+...
 `
 const tokens = lexer.lex(hxqa)
 const statements = parser.parse(tokens)
-console.log(hxqa)
-console.log(tokens)
-console.log(statements)
+const ast = analyzer.analyze(statements)
+const jsonl = generator.generate(ast)
+console.log("hxqa:\n", hxqa, "\n")
+console.log("tokens:\n", tokens, "\n")
+console.log("statements:\n", statements, "\n")
+console.log("ast:\n", ast, "\n")
+console.log("qa 1 pairs above:\n", ast.conversations[0].questionAnswerPairs, "\n")
+console.log("qa 2 pairs above:\n", ast.conversations[1].questionAnswerPairs, "\n")
+console.log("jsonl:\n", jsonl, "\n")

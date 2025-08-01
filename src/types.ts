@@ -1,5 +1,9 @@
+export type AST = {
+    conversations: Conversation[]
+}
+
 export type Conversation = {
-    systemPrompt: string
+    systemPrompt?: string
     questionAnswerPairs: QuestionAnswerPair[]
 }
 
