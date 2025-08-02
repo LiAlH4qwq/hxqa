@@ -5,16 +5,16 @@ export const parse = (tokens: types.Token[]): types.Statement[] => {
         const tryFormingStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
             const tryCollectingText = (tokens: types.Token[]): [text: string, restTokens: types.Token[]] => {
                 if (tokens.length <= 0) return ["", tokens]
-                if (!(tokens[0].type === "text" || tokens[0].type === "newLine")) return ["", tokens]
-                const currentText = tokens[0].type === "newLine" ? "\n" : tokens[0].text
+                if (!(tokens[0].type === "content" || tokens[0].type === "newLine")) return ["", tokens]
+                const currentText = tokens[0].type === "newLine" ? "\n" : tokens[0].value
                 const [nextText, restTokens] = tryCollectingText(tokens.slice(1))
                 const text = currentText + nextText
                 return [text, restTokens]
             }
             const tryFormingConversationStartStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
                 const [text, restTokens] = tryCollectingText(tokens)
-                if (text.trim() === "") return [{ type: "conversationStart" }, restTokens]
-                else return [{ type: "conversationStart", content: text.trim() }, restTokens]
+                if (text.trim() === "") return [{ type: "start" }, restTokens]
+                else return [{ type: "start", content: text.trim() }, restTokens]
             }
             const tryFormingInputStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
                 const [text, restTokens] = tryCollectingText(tokens)

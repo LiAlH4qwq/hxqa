@@ -31,7 +31,7 @@ const tryFormingConversation = (statements: hxqaTypes.Statement[]): [conversatio
 const tryFormingQuestionAnswerPairs = (statements: hxqaTypes.Statement[]): [questionAnswerPairs: genericTypes.QuestionAnswerPair[], restStatements: hxqaTypes.Statement[]] => {
     const [currentQuestionAnswerPair, currentRestStatements] = tryFormingQuestionAnswerPair(statements)
     if (currentRestStatements.length <= 0) return [[currentQuestionAnswerPair], currentRestStatements]
-    if (currentRestStatements[0].type === "conversationStart") return [[currentQuestionAnswerPair], currentRestStatements]
+    if (currentRestStatements[0].type === "start") return [[currentQuestionAnswerPair], currentRestStatements]
     const [nextQuestionAnswerPairs, nextRestStatements] = tryFormingQuestionAnswerPairs(currentRestStatements)
     return [[currentQuestionAnswerPair, ...nextQuestionAnswerPairs], nextRestStatements]
 }
