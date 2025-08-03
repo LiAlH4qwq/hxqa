@@ -1,43 +1,63 @@
+import * as error from "../error"
 import * as types from "./types"
 
-export const parse = (tokens: types.Token[]): types.Statement[] => {
-    const tryFormingStatements = (tokens: types.Token[]): types.Statement[] => {
-        const tryFormingStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
-            const tryCollectingText = (tokens: types.Token[]): [text: string, restTokens: types.Token[]] => {
-                if (tokens.length <= 0) return ["", tokens]
-                if (!(tokens[0].type === "content" || tokens[0].type === "newLine")) return ["", tokens]
-                const currentText = tokens[0].type === "newLine" ? "\n" : tokens[0].value
-                const [nextText, restTokens] = tryCollectingText(tokens.slice(1))
-                const text = currentText + nextText
-                return [text, restTokens]
+type ParsingError = {
+    type: "EmptyText"
+    tokenMappingInfo: types.MappingInfo
+}
+
+export const parse = (tokens: types.Token[]): error.Result<types.Statement[], ParsingError[]> => {
+    const [results, _] = tryFormingStatements([], tokens)
+    const errors = results.filter(result => !result.pass).map(result => result.out())
+    if (errors.length >= 1) return error.resultError(errors)
+    const statements = results.map(result => result.out()) as types.Statement[]
+    return error.resultPass(statements)
+}
+
+const tryFormingStatements = (accumulatedResults: error.Result<types.Statement, ParsingError>[], tokens: types.Token[]): [results: error.Result<types.Statement, ParsingError>[], restTokens: types.Token[]] => {
+    if (tokens.length <= 0) return [accumulatedResults, tokens]
+    const [result, restTokens] = tryFormingStatement(tokens)
+    return tryFormingStatements([...accumulatedResults, result], restTokens)
+}
+
+const tryFormingStatement = (tokens: types.Token[]): [result: error.Result<types.Statement, ParsingError>, restTokens: types.Token[]] => {
+    const currentToken = tokens[0]
+    const [text, textTokenCount, restTokens] = collectText("", 0, tokens.slice(1))
+    const trimedText = text.trim()
+    if (trimedText === "" && (currentToken.type === "inputId" || currentToken.type === "outputId"))
+        return [error.resultError({
+            type: "EmptyText",
+            tokenMappingInfo: currentToken.mappingInfo,
+        }), restTokens]
+    else if (trimedText === "" && (currentToken.type === "startId" || currentToken.type === "commentId"))
+        return [error.resultPass({
+            type: currentToken.type === "startId" ? "start" : "comment",
+            mappingInfo: {
+                lineStart: currentToken.mappingInfo.lineStart,
+                lineEnd: tokens[textTokenCount - 1].mappingInfo.lineEnd,
+                columnStart: currentToken.mappingInfo.columnStart,
+                columnEnd: tokens[textTokenCount - 1].mappingInfo.columnEnd
             }
-            const tryFormingConversationStartStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
-                const [text, restTokens] = tryCollectingText(tokens)
-                if (text.trim() === "") return [{ type: "start" }, restTokens]
-                else return [{ type: "start", content: text.trim() }, restTokens]
-            }
-            const tryFormingInputStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
-                const [text, restTokens] = tryCollectingText(tokens)
-                return [{ type: "input", content: text.trim() }, restTokens]
-            }
-            const tryFormingOutputStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
-                const [text, restTokens] = tryCollectingText(tokens)
-                return [{ type: "output", content: text.trim() }, restTokens]
-            }
-            const tryFormingCommentStatement = (tokens: types.Token[]): [statement: types.Statement, restTokens: types.Token[]] => {
-                const [text, restTokens] = tryCollectingText(tokens)
-                return [{ type: "comment", content: text.trim() }, restTokens]
-            }
-            if (tokens[0].type === "startId") return tryFormingConversationStartStatement(tokens.slice(1))
-            else if (tokens[0].type === "inputId") return tryFormingInputStatement(tokens.slice(1))
-            else if (tokens[0].type === "outputId") return tryFormingOutputStatement(tokens.slice(1))
-            else if (tokens[0].type === "commentId") return tryFormingCommentStatement(tokens.slice(1))
-            else return tryFormingCommentStatement(tokens.slice(1))
+        }), restTokens]
+    else return [error.resultPass({
+        type: currentToken.type.slice(0, -2) as "start" | "input" | "output" | "comment",
+        value: trimedText,
+        mappingInfo: {
+            lineStart: currentToken.mappingInfo.lineStart,
+            lineEnd: tokens[textTokenCount - 1].mappingInfo.lineEnd,
+            columnStart: currentToken.mappingInfo.columnStart,
+            columnEnd: tokens[textTokenCount - 1].mappingInfo.columnEnd
         }
-        const [statement, restTokens] = tryFormingStatement(tokens)
-        if (restTokens.length <= 0) return [statement]
-        else return [statement, ...tryFormingStatements(restTokens)]
-    }
-    const statements = tryFormingStatements(tokens)
-    return statements
+    }), restTokens]
+}
+
+const collectText = (accumulatedText: string, accumulatedTokenCount: number, tokens: types.Token[]): [text: string, tokenCount: number, restTokens: types.Token[]] => {
+    // may reach the end of token list
+    // or other token
+    // both means text collecting end
+    if (tokens.length <= 0 ||
+        (!(tokens[0].type === "content" || tokens[0].type === "newLine"))
+    ) return [accumulatedText, accumulatedTokenCount, tokens]
+    const currentText = tokens[0].type === "newLine" ? "\n" : tokens[0].value
+    return collectText(accumulatedText + currentText, accumulatedTokenCount + 1, tokens.slice(1))
 }

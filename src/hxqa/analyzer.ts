@@ -20,7 +20,7 @@ const tryFormingConversations = (statements: hxqaTypes.Statement[]): genericType
 }
 
 const tryFormingConversation = (statements: hxqaTypes.Statement[]): [conversation: genericTypes.Conversation, restStatements: hxqaTypes.Statement[]] => {
-    const systemPrompt = statements[0].content
+    const systemPrompt = statements[0].value
     const [questionAnswerPairs, restStatements] = tryFormingQuestionAnswerPairs(statements.slice(1))
     const conversation = systemPrompt === undefined ?
         { questionAnswerPairs: questionAnswerPairs } :
@@ -37,8 +37,8 @@ const tryFormingQuestionAnswerPairs = (statements: hxqaTypes.Statement[]): [ques
 }
 
 const tryFormingQuestionAnswerPair = (statements: hxqaTypes.Statement[]): [questionAnswerPair: genericTypes.QuestionAnswerPair, restStatements: hxqaTypes.Statement[]] => {
-    const question = statements[0].content as string
-    const answer = statements[1].content as string
+    const question = statements[0].value as string
+    const answer = statements[1].value as string
     const questionAnswerPair = { question: question, answer: answer }
     return [questionAnswerPair, statements.slice(2)]
 }

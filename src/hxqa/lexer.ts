@@ -3,259 +3,74 @@ import * as types from "./types"
 export const lex = (hxqa: string): types.Token[] => {
     const lines = hxqa.split("\n")
     const tokensInLines = lines.map((line, lineIndex) => lexLine(line, lineIndex + 1))
-    const tokensInLinesFiltered = tokensInLines.filter(tokens => tokens[0].type != "empty")
+    const tokensInLinesFiltered = tokensInLines.filter(tokens => tokens.length !== 0)
     const tokens = tokensInLinesFiltered.flat()
     return tokens
 }
 
 const lexLine = (line: string, lineNum: number): types.Token[] => {
+    const ids = [":::", "<<<", ">>>", "///"]
     const trimedLine = line.trim()
-    if (trimedLine === "") return [{ type: "empty" }]
-    else if (trimedLine === ":::") {
-        const columnStart = line.indexOf(":::") + 1
+    if (trimedLine === "") return []
+    else if (ids.includes(trimedLine)) {
+        const id = trimedLine as ":::" | "<<<" | ">>>" | "///"
+        const idColumnStart = line.indexOf(id) + 1
         return [
-            {
-                type: "startId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: columnStart,
-                    columnEnd: columnStart + 3
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
+            tokenNoValue(id, lineNum, lineNum, idColumnStart, idColumnStart + 2),
+            tokenNoValue("\n", lineNum, lineNum, line.length + 1, line.length + 1)
         ]
     }
-    else if (trimedLine === "<<<") {
-        const columnStart = line.indexOf("<<<") + 1
-        return [
-            {
-                type: "inputId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: columnStart,
-                    columnEnd: columnStart + 3
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine === ">>>") {
-        const columnStart = line.indexOf(">>>") + 1
-        return [
-            {
-                type: "outputId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: columnStart,
-                    columnEnd: columnStart + 3
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine === "///") {
-        const columnStart = line.indexOf("///") + 1
-        return [
-            {
-                type: "commentId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: columnStart,
-                    columnEnd: columnStart + 3
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine.startsWith(":::")) {
+    else if (ids.includes(trimedLine.slice(0, 3))) {
+        const id = trimedLine.slice(0, 3) as ":::" | "<<<" | ">>>" | "///"
+        const idColumnStart = line.indexOf(id) + 1
         const content = trimedLine.slice(3).trim()
-        const idColumnStart = line.indexOf(":::") + 1
         const contentColumnStart = line.indexOf(content) + 1
         return [
-            {
-                type: "startId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: idColumnStart,
-                    columnEnd: idColumnStart + 3
-                }
-            },
-            {
-                type: "content",
-                value: content,
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: contentColumnStart,
-                    columnEnd: contentColumnStart + content.length
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine.startsWith("<<<")) {
-        const content = trimedLine.slice(3).trim()
-        const idColumnStart = line.indexOf("<<<") + 1
-        const contentColumnStart = line.indexOf(content) + 1
-        return [
-            {
-                type: "inputId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: idColumnStart,
-                    columnEnd: idColumnStart + 3
-                }
-            },
-            {
-                type: "content",
-                value: content,
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: contentColumnStart,
-                    columnEnd: contentColumnStart + content.length
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine.startsWith(">>>")) {
-        const content = trimedLine.slice(3).trim()
-        const idColumnStart = line.indexOf(">>>") + 1
-        const contentColumnStart = line.indexOf(content) + 1
-        return [
-            {
-                type: "outputId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: idColumnStart,
-                    columnEnd: idColumnStart + 3
-                }
-            },
-            {
-                type: "content",
-                value: content,
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: contentColumnStart,
-                    columnEnd: contentColumnStart + content.length
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
-        ]
-    }
-    else if (trimedLine.startsWith("///")) {
-        const content = trimedLine.slice(3).trim()
-        const idColumnStart = line.indexOf("///") + 1
-        const contentColumnStart = line.indexOf(content) + 1
-        return [
-            {
-                type: "commentId",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: idColumnStart,
-                    columnEnd: idColumnStart + 3
-                }
-            },
-            {
-                type: "content",
-                value: content,
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: contentColumnStart,
-                    columnEnd: contentColumnStart + content.length
-                }
-            },
-            {
-                type: "newLine",
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: line.length + 1,
-                    columnEnd: line.length + 1
-                }
-            }
+            tokenNoValue(id, lineNum, lineNum, idColumnStart, idColumnStart + 2),
+            tokenContent(content, lineNum, lineNum, contentColumnStart, contentColumnStart + content.length - 1),
+            tokenNoValue("\n", lineNum, lineNum, line.length + 1, line.length + 1)
         ]
     }
     else {
-        const columnStart = line.indexOf(trimedLine) + 1
+        const contentColumnStart = line.indexOf(trimedLine) + 1
         return [
-            {
-                type: "content",
-                value: trimedLine,
-                mappingInfo: {
-                    lineStart: lineNum,
-                    lineEnd: lineNum,
-                    columnStart: columnStart,
-                    columnEnd: columnStart + trimedLine.length
-                }
-            }
+            tokenContent(trimedLine, lineNum, lineNum, contentColumnStart, contentColumnStart + trimedLine.length - 1),
+            tokenNoValue("\n", lineNum, lineNum, line.length + 1, line.length + 1)
         ]
+    }
+}
+
+const tokenNoValue = (
+    id: "\n" | ":::" | "<<<" | ">>>" | "///",
+    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
+): types.Token => {
+    return {
+        type: id === "\n" ? "newLine" :
+            id === ":::" ? "startId" :
+                id === "<<<" ? "inputId" :
+                    id === ">>>" ? "outputId" :
+                        "commentId",
+        mappingInfo: {
+            lineStart: lineStart,
+            lineEnd: lineEnd,
+            columnStart: columnStart,
+            columnEnd: columnEnd
+        }
+    }
+}
+
+const tokenContent = (
+    value: string,
+    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
+): types.Token => {
+    return {
+        type: "content",
+        value: value,
+        mappingInfo: {
+            lineStart: lineStart,
+            lineEnd: lineEnd,
+            columnStart: columnStart,
+            columnEnd: columnEnd
+        }
     }
 }
