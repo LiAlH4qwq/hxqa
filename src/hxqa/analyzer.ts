@@ -2,7 +2,7 @@ import * as hxqaTypes from "./types"
 import * as genericTypes from "../types"
 
 export const analyze = (statements: hxqaTypes.Statement[]): genericTypes.AST => {
-    const satementsWithoutComments = statements.filter(statement => statement.type != "comment")
+    const satementsWithoutComments = statements.filter(statement => statement.type !== "comment")
     const ast = tryFormingAST(satementsWithoutComments)
     return ast
 }
