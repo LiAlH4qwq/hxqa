@@ -4,9 +4,8 @@ import * as analyzer from "./hxqa/analyzer"
 import * as generator from "./jsonl/generator"
 import * as error from "./error"
 const hxqa = `
-system prompt
+:::system prompt
 <<< user input
->>>
 >>>
 ai output
 /// comment

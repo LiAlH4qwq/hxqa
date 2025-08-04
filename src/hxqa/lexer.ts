@@ -3,15 +3,16 @@ import * as types from "./types"
 export const lex = (hxqa: string): types.Token[] => {
     const lines = hxqa.split("\n")
     const tokensInLines = lines.map((line, lineIndex) => lexLine(line, lineIndex + 1))
-    const tokensInLinesFiltered = tokensInLines.filter(tokens => tokens.length !== 0)
-    const tokens = tokensInLinesFiltered.flat()
+    const tokens = tokensInLines.flat()
     return tokens
 }
 
 const lexLine = (line: string, lineNum: number): types.Token[] => {
     const ids = [":::", "<<<", ">>>", "///"]
     const trimedLine = line.trim()
-    if (trimedLine === "") return []
+    if (trimedLine === "") return [
+        tokenNoValue("\n", lineNum, lineNum, 0, 0)
+    ]
     else if (ids.includes(trimedLine)) {
         const id = trimedLine as ":::" | "<<<" | ">>>" | "///"
         const idColumnStart = line.indexOf(id) + 1
