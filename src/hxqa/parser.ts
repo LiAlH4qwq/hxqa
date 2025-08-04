@@ -95,7 +95,7 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
         }), restTokens]
     else if (text === "" && (currentToken.type === "startId" || currentToken.type === "commentId"))
         return [error.resultPass({
-            type: currentToken!!.type === "startId" ? "start" : "comment",
+            type: currentToken.type === "startId" ? "start" : "comment",
             mappingInfo: {
                 lineStart: currentToken.mappingInfo.lineStart,
                 lineEnd: currentToken.mappingInfo.lineEnd,
@@ -123,11 +123,13 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
 
 const collectingText: CollectingText = (accumulatedText, tokens) => {
     // may reach the end of token list
+    if (tokens.length <= 0) return [accumulatedText, tokens]
+    // if not, head token should exist
+    const currentToken = tokens[0]!!
     // or meet other token
     // both means text collecting end
-    if (tokens.length <= 0 ||
-        (!(tokens[0]!!.type === "content" || tokens[0]!!.type === "newLine"))
-    ) return [accumulatedText, tokens]
-    const currentText = tokens[0]!!.type === "newLine" ? "\n" : tokens[0]!!.value
+    if (!(currentToken.type === "content" || currentToken.type === "newLine"))
+        return [accumulatedText, tokens]
+    const currentText = currentToken.type === "newLine" ? "\n" : currentToken.value
     return collectingText([...accumulatedText, currentText], tokens.slice(1))
 }
