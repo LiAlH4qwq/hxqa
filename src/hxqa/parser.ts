@@ -1,63 +1,112 @@
 import * as error from "../error"
 import * as types from "./types"
 
-type ParsingError = {
-    type: "EmptyText"
-    tokenMappingInfo: types.MappingInfo
+type ParsingError = ({
+    type: "MissingFollowingToken"
+    details: "NoTextAfterInputOrOutput"
+} | {
+    type: "UnexpectedTokens"
+    details: "TextBeforeIdentifiers"
+}) & {
+    mappingInfo: types.MappingInfo
 }
 
-export const parse = (tokens: types.Token[]): error.Result<types.Statement[], ParsingError[]> => {
+type Parse = (tokens: types.Token[]) =>
+    error.Result<types.Statement[], never> | error.Result<never, ParsingError[]>
+
+type OmittingUnexpectedText = (accumulator: error.Result<never, ParsingError>[], tokens: types.Token[]) =>
+    [result: typeof accumulator, restTokens: typeof tokens]
+
+type TryFormingStatements = (accumulatedResults: (
+    error.Result<types.Statement, never> | error.Result<never, ParsingError>)[],
+    tokens: types.Token[]) =>
+    [results: typeof accumulatedResults, restTokens: typeof tokens]
+
+type TryFormingStatement = (tokens: types.Token[]) =>
+    [result: error.Result<types.Statement, never> | error.Result<never, ParsingError>,
+        restTokens: typeof tokens]
+
+type CollectingText = (accumulatedTexts: string[], tokens: types.Token[]) =>
+    [texts: typeof accumulatedTexts, restTokens: typeof tokens]
+
+export const parse: Parse = (tokens) => {
+    const [resultsBeforeId, restTokens] = omittingUnexpectedText([], tokens)
+    const resultsBeforeIdReduced = resultsBeforeId.length <= 0 ? [] :
+        [error.resultError({
+            ...resultsBeforeId[0]!!.out(),
+            mappingInfo: {
+                ...resultsBeforeId[0]!!.out().mappingInfo,
+                lineEnd: resultsBeforeId.at(-1)!!.out().mappingInfo.lineEnd,
+                columnEnd: resultsBeforeId.at(-1)!!.out().mappingInfo.columnEnd
+            }
+        })]
     const [results, _] = tryFormingStatements([], tokens)
-    const errors = results.filter(result => !result.pass).map(result => result.out())
-    if (errors.length >= 1) return error.resultError(errors)
-    const statements = results.map(result => result.out()) as types.Statement[]
-    return error.resultPass(statements)
+    return error.resultUnity([...resultsBeforeIdReduced, ...results])
 }
 
-const tryFormingStatements = (accumulatedResults: error.Result<types.Statement, ParsingError>[], tokens: types.Token[]): [results: error.Result<types.Statement, ParsingError>[], restTokens: types.Token[]] => {
+const omittingUnexpectedText: OmittingUnexpectedText = (accumulator, tokens) => {
+    const currentToken = tokens[0]!!
+    if (["startId", "inputId", "outputId", "commentId"].includes(currentToken.type))
+        return [accumulator, tokens]
+    const errorResult = error.resultError({
+        type: "UnexpectedTokens" as "UnexpectedTokens",
+        details: "TextBeforeIdentifiers" as "TextBeforeIdentifiers",
+        mappingInfo: {
+            lineStart: currentToken.mappingInfo.lineStart,
+            lineEnd: currentToken.mappingInfo.lineEnd,
+            columnStart: currentToken.mappingInfo.columnStart,
+            columnEnd: currentToken.mappingInfo.columnEnd
+        }
+    })
+    return omittingUnexpectedText([...accumulator, errorResult], tokens.slice(1))
+}
+
+const tryFormingStatements: TryFormingStatements = (accumulatedResults, tokens) => {
     if (tokens.length <= 0) return [accumulatedResults, tokens]
     const [result, restTokens] = tryFormingStatement(tokens)
     return tryFormingStatements([...accumulatedResults, result], restTokens)
 }
 
-const tryFormingStatement = (tokens: types.Token[]): [result: error.Result<types.Statement, ParsingError>, restTokens: types.Token[]] => {
+const tryFormingStatement: TryFormingStatement = (tokens) => {
     const currentToken = tokens[0]
-    const [text, textTokenCount, restTokens] = collectText("", 0, tokens.slice(1))
-    const trimedText = text.trim()
-    if (trimedText === "" && (currentToken.type === "inputId" || currentToken.type === "outputId"))
+    const [texts, restTokens] = collectingText([], tokens.slice(1))
+    const text = texts.join("").trim()
+    const textTokenCount = texts.length
+    if (text === "" && (currentToken!!.type === "inputId" || currentToken!!.type === "outputId"))
         return [error.resultError({
-            type: "EmptyText",
-            tokenMappingInfo: currentToken.mappingInfo,
+            type: "MissingFollowingToken",
+            details: "NoTextAfterInputOrOutput",
+            mappingInfo: currentToken!!.mappingInfo,
         }), restTokens]
-    else if (trimedText === "" && (currentToken.type === "startId" || currentToken.type === "commentId"))
+    else if (text === "" && (currentToken!!.type === "startId" || currentToken!!.type === "commentId"))
         return [error.resultPass({
-            type: currentToken.type === "startId" ? "start" : "comment",
+            type: currentToken!!.type === "startId" ? "start" : "comment",
             mappingInfo: {
-                lineStart: currentToken.mappingInfo.lineStart,
-                lineEnd: tokens[textTokenCount - 1].mappingInfo.lineEnd,
-                columnStart: currentToken.mappingInfo.columnStart,
-                columnEnd: tokens[textTokenCount - 1].mappingInfo.columnEnd
+                lineStart: currentToken!!.mappingInfo.lineStart,
+                lineEnd: tokens[textTokenCount]!!.mappingInfo.lineEnd,
+                columnStart: currentToken!!.mappingInfo.columnStart,
+                columnEnd: tokens[textTokenCount]!!.mappingInfo.columnEnd
             }
         }), restTokens]
     else return [error.resultPass({
-        type: currentToken.type.slice(0, -2) as "start" | "input" | "output" | "comment",
-        value: trimedText,
+        type: currentToken!!.type.slice(0, -2) as "start" | "input" | "output" | "comment",
+        value: text,
         mappingInfo: {
-            lineStart: currentToken.mappingInfo.lineStart,
-            lineEnd: tokens[textTokenCount - 1].mappingInfo.lineEnd,
-            columnStart: currentToken.mappingInfo.columnStart,
-            columnEnd: tokens[textTokenCount - 1].mappingInfo.columnEnd
+            lineStart: currentToken!!.mappingInfo.lineStart,
+            lineEnd: tokens[textTokenCount]!!.mappingInfo.lineEnd,
+            columnStart: currentToken!!.mappingInfo.columnStart,
+            columnEnd: tokens[textTokenCount]!!.mappingInfo.columnEnd
         }
     }), restTokens]
 }
 
-const collectText = (accumulatedText: string, accumulatedTokenCount: number, tokens: types.Token[]): [text: string, tokenCount: number, restTokens: types.Token[]] => {
+const collectingText: CollectingText = (accumulatedText, tokens) => {
     // may reach the end of token list
-    // or other token
+    // or meet other token
     // both means text collecting end
     if (tokens.length <= 0 ||
-        (!(tokens[0].type === "content" || tokens[0].type === "newLine"))
-    ) return [accumulatedText, accumulatedTokenCount, tokens]
-    const currentText = tokens[0].type === "newLine" ? "\n" : tokens[0].value
-    return collectText(accumulatedText + currentText, accumulatedTokenCount + 1, tokens.slice(1))
+        (!(tokens[0]!!.type === "content" || tokens[0]!!.type === "newLine"))
+    ) return [accumulatedText, tokens]
+    const currentText = tokens[0]!!.type === "newLine" ? "\n" : tokens[0]!!.value
+    return collectingText([...accumulatedText, currentText], tokens.slice(1))
 }

@@ -25,3 +25,10 @@ export const resultError = <E>(error: E): Result<never, E> => {
         then: () => resultError(error)
     }
 }
+
+export const resultUnity = <V, E>(results: Result<V, E>[]): Result<V[], never> | Result<never, E[]> => {
+    const errorResults = results.filter(result => !result.pass)
+    if (errorResults.length >= 1) return resultError(errorResults.map(errorResult => errorResult.out()))
+    const passResults = results as Result<V, never>[]
+    return resultPass(passResults.map(passResult => passResult.out()))
+}
