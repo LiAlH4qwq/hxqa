@@ -1,13 +1,28 @@
-import * as types from "./types"
+import * as error from "src/error"
+import * as types from "hxqa/types"
 
-export const lex = (hxqa: string): types.Token[] => {
+type Lex = (hxqa: string) => error.Result<types.Token[], never>
+
+type LexLine = (line: string, lineNum: number) => types.Token[]
+
+type TokenNoValue = (
+    id: "\n" | ":::" | "<<<" | ">>>" | "///",
+    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
+) => types.Token
+
+type TokenContent = (
+    value: string,
+    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
+) => types.Token
+
+export const lex: Lex = (hxqa) => {
     const lines = hxqa.split("\n")
     const tokensInLines = lines.map((line, lineIndex) => lexLine(line, lineIndex + 1))
     const tokens = tokensInLines.flat()
-    return tokens
+    return error.resultPass(tokens)
 }
 
-const lexLine = (line: string, lineNum: number): types.Token[] => {
+const lexLine: LexLine = (line, lineNum) => {
     const ids = [":::", "<<<", ">>>", "///"]
     const trimedLine = line.trim()
     if (trimedLine === "") return [
@@ -41,10 +56,7 @@ const lexLine = (line: string, lineNum: number): types.Token[] => {
     }
 }
 
-const tokenNoValue = (
-    id: "\n" | ":::" | "<<<" | ">>>" | "///",
-    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
-): types.Token => {
+const tokenNoValue: TokenNoValue = (id, lineStart, lineEnd, columnStart, columnEnd) => {
     return {
         type: id === "\n" ? "newLine" :
             id === ":::" ? "startId" :
@@ -60,10 +72,7 @@ const tokenNoValue = (
     }
 }
 
-const tokenContent = (
-    value: string,
-    lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
-): types.Token => {
+const tokenContent: TokenContent = (value, lineStart, lineEnd, columnStart, columnEnd) => {
     return {
         type: "content",
         value: value,

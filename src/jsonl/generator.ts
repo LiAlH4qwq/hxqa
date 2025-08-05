@@ -1,22 +1,23 @@
-import * as jsonlTypes from "./types"
-import * as genericTypes from "../types"
+import * as error from "src/error"
+import * as jsonlTypes from "jsonl/types"
+import * as genericTypes from "src/types"
 
-export const generate = (ast: genericTypes.AST): string => {
+type Generate = (ast: genericTypes.AST) => error.Result<string, never>
+
+type GenerateJson = (conversation: genericTypes.Conversation) => string
+
+export const generate: Generate = (ast) => {
     const jsonl = ast.conversations.map(generateJson).join("\n")
-    return jsonl
+    return error.resultPass(jsonl)
 }
 
-const generateJson = (conversation: genericTypes.Conversation): string => {
-    const systemPrompt = conversation.systemPrompt
-    const messages = conversation.questionAnswerPairs.reduce((messages, questionAnswerPair) => {
-        const input = { role: "user", content: questionAnswerPair.question } as jsonlTypes.Message
-        const output = { role: "assistant", content: questionAnswerPair.answer } as jsonlTypes.Message
-        return [...messages, input, output]
-    },
-        systemPrompt === undefined ?
-            [] as jsonlTypes.Message[] :
-            [{ role: "system", content: systemPrompt }] as jsonlTypes.Message[]
-    )
+const generateJson: GenerateJson = (conversation) => {
+    // systemPrompt is an optional node
+    const systemPrompt = conversation.systemPrompt as string | undefined
+    const messages = conversation.questionAnswerPairs.map((questionAnswerPair) => [
+        { role: "user", content: questionAnswerPair.question },
+        { role: "assistant", content: questionAnswerPair.answer }
+    ]).flat()
     const json = JSON.stringify({ messages: messages })
     return json
 }
