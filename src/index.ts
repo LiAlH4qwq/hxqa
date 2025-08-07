@@ -1,24 +1,19 @@
-import * as hxqac from "hxqa/hxqac"
+import * as fs from "fs"
+import * as process from "process"
+import * as hxqac from "src/hxqac"
 
-const hxqa = `
-/// this is a comment that will be ignored by the compiler
-::: a short system prompt
-    << <a short input with no space before identifier
-        >>>
+type Main = (argv: string[]) => void
 
-        a long and multi - line output
-balabala
-...
+const main: Main = (argv) => {
+    const args = argv.slice(2)
+    if (args.length !== 2) {
+        console.error("Usage: hxqac <input.hxqa> <output.jsonl>")
+        return
+    }
+    const hxqa = fs.readFileSync(args[0], "utf-8")
+    const jsonl = hxqac.hxqac(hxqa).out()
+    if (typeof jsonl === "string") fs.writeFileSync(args[1], jsonl, "utf-8")
+    else console.error(JSON.stringify(jsonl, undefined, "  "))
+}
 
-/// new-line before and after content will also be ignored
-<< <
-    another long but single - line input
-        >>> a short output
-
-:::
-/// another conversation with no system prompt
-<< <hi there
-    >>> hello hxqa
-`
-
-console.log(hxqac.compile(hxqa))
+main(process.argv)

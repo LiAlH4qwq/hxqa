@@ -2,41 +2,31 @@ import * as error from "src/error"
 import * as hxqaTypes from "hxqa/types"
 import * as genericTypes from "src/types"
 
-type AnalyzingError = ({
-    type: "UnexpectedStatements"
-    details: "QuestionOrAnswerBeforeConversation" | "ExpectedInputButGetOutput"
-} | {
-    type: "MissingFollowingStatements"
-    details: "ConversationMissingQuestionAnswerPairs" | "QuestionMissingAnswer"
-}) & {
-    mappingInfo: hxqaTypes.MappingInfo
-}
-
 type Analyze = (statements: hxqaTypes.Statement[]) =>
-    error.Result<genericTypes.AST, never> | error.Result<never, AnalyzingError[]>
+    error.Result<genericTypes.AST, never> | error.Result<never, hxqaTypes.CompilingError[]>
 
 type RemoveInvalidQuestionAnswerStatements =
     (accumulatedMappingInfo: hxqaTypes.MappingInfo, statements: hxqaTypes.Statement[]) =>
         [mappingInfo: typeof accumulatedMappingInfo, restStatements: typeof statements]
 
 type TryFormingConversations = (accumulatedResults: (error.Result<genericTypes.Conversation, never> |
-    error.Result<never, AnalyzingError[]>)[],
+    error.Result<never, hxqaTypes.CompilingError[]>)[],
     statements: hxqaTypes.Statement[]) =>
     [results: typeof accumulatedResults, restStatements: typeof statements]
 
 type TryFormingConversation = (statements: hxqaTypes.Statement[]) =>
     [result: error.Result<genericTypes.Conversation, never> |
-        error.Result<never, AnalyzingError[]>, restStatements: typeof statements]
+        error.Result<never, hxqaTypes.CompilingError[]>, restStatements: typeof statements]
 
 type TryFormingQuestionAnswerPairs =
     (accumulatedResults: (error.Result<genericTypes.QuestionAnswerPair, never> |
-        error.Result<never, AnalyzingError>)[],
+        error.Result<never, hxqaTypes.CompilingError>)[],
         statements: hxqaTypes.Statement[]) =>
         [results: typeof accumulatedResults, restStatements: typeof statements]
 
 type TryFormingQuestionAnswerPair = (statements: hxqaTypes.Statement[]) =>
     [result: error.Result<genericTypes.QuestionAnswerPair, never> |
-        error.Result<never, AnalyzingError>, restStatements: typeof statements]
+        error.Result<never, hxqaTypes.CompilingError>, restStatements: typeof statements]
 
 export const analyze: Analyze = (statements) => {
     const statementsWithoutComments = statements.filter(statement => statement.type !== "comment")
@@ -76,6 +66,7 @@ const tryFormingConversation: TryFormingConversation = (statements) => {
         const [mappingInfo, restStatements] = removeInvalidQuestionAnswerStatements(
             currentStatement.mappingInfo, statements.slice(1))
         return [error.resultError([{
+            stage: "AnalyzingError",
             type: "UnexpectedStatements",
             details: "QuestionOrAnswerBeforeConversation",
             mappingInfo: mappingInfo
@@ -85,6 +76,7 @@ const tryFormingConversation: TryFormingConversation = (statements) => {
     const systemPrompt = currentStatement.value as string | undefined
     const [results, restStatements] = tryFormingQuestionAnswerPairs([], statements.slice(1))
     if (results.length <= 0) return [error.resultError([{
+        stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "ConversationMissingQuestionAnswerPairs",
         mappingInfo: currentStatement.mappingInfo
@@ -109,11 +101,13 @@ const tryFormingQuestionAnswerPairs: TryFormingQuestionAnswerPairs = (accumulate
 
 const tryFormingQuestionAnswerPair: TryFormingQuestionAnswerPair = (statements) => {
     if (statements[0].type !== "input") return [error.resultError({
+        stage: "AnalyzingError",
         type: "UnexpectedStatements",
         details: "ExpectedInputButGetOutput",
         mappingInfo: statements[0].mappingInfo
     }), statements.slice(1)]
     if (statements.length <= 1 || statements[1].type !== "output") return [error.resultError({
+        stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "QuestionMissingAnswer",
         mappingInfo: statements[0].mappingInfo

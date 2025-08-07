@@ -1,42 +1,38 @@
 import * as error from "src/error"
 import * as types from "hxqa/types"
 
-type ParsingError = {
-    type: "NoTokens" | "UnknownError"
-} | ({
-    type: "MissingFollowingToken"
-    details: "NoTextAfterInputOrOutput"
-} | {
-    type: "UnexpectedTokens"
-    details: "TextBeforeIdentifiers"
-}) & {
-    mappingInfo: types.MappingInfo
-}
+
 
 type Parse = (tokens: types.Token[]) =>
-    error.Result<types.Statement[], never> | error.Result<never, ParsingError[]>
+    error.Result<types.Statement[], never> | error.Result<never, types.CompilingError[]>
 
 type RemoveNewLineTokens = (tokens: types.Token[]) => typeof tokens
 
 type TryFormingStatements = (accumulatedResults: (
-    error.Result<types.Statement, never> | error.Result<never, ParsingError>)[],
+    error.Result<types.Statement, never> | error.Result<never, types.CompilingError>)[],
     tokens: types.Token[]) =>
     [results: typeof accumulatedResults, restTokens: typeof tokens]
 
 type TryFormingStatement = (tokens: types.Token[]) =>
-    [result: error.Result<types.Statement, never> | error.Result<never, ParsingError>,
+    [result: error.Result<types.Statement, never> | error.Result<never, types.CompilingError>,
         restTokens: typeof tokens]
 
 type CollectingText = (accumulatedTexts: string[], tokens: types.Token[]) =>
     [texts: typeof accumulatedTexts, restTokens: typeof tokens]
 
 export const parse: Parse = (tokens) => {
-    if (tokens.length <= 0) return error.resultError([{ type: "NoTokens" }])
+    if (tokens.length <= 0) return error.resultError([{
+        stage: "ParsingError",
+        type: "NoTokens"
+    }])
     // to preserve line mapping info
     // token list produce by lexer may have newline token at the heading
     // it's not error, just remove it
     const tokensRemovedHeadingNewLines = removeNewLineTokens(tokens)
-    if (tokensRemovedHeadingNewLines.length <= 0) return error.resultError([{ type: "NoTokens" }])
+    if (tokensRemovedHeadingNewLines.length <= 0) return error.resultError([{
+        stage: "ParsingError",
+        type: "NoTokens"
+    }])
     const [results, _] = tryFormingStatements([], tokensRemovedHeadingNewLines)
     return error.resultUnity(results)
 }
@@ -66,6 +62,7 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
         const textTokenCount = texts.length
         const textEndingToken = tokens[textTokenCount - 1]
         return [error.resultError({
+            stage: "ParsingError",
             type: "UnexpectedTokens",
             details: "TextBeforeIdentifiers",
             mappingInfo: {
@@ -81,6 +78,7 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
     const textTokenCount = texts.length
     if (text === "" && (currentToken.type === "inputId" || currentToken.type === "outputId"))
         return [error.resultError({
+            stage: "ParsingError",
             type: "MissingFollowingToken",
             details: "NoTextAfterInputOrOutput",
             mappingInfo: currentToken.mappingInfo,

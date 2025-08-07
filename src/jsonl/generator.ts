@@ -4,20 +4,21 @@ import * as genericTypes from "src/types"
 
 type Generate = (ast: genericTypes.AST) => error.Result<string, never>
 
-type GenerateJson = (conversation: genericTypes.Conversation) => string
+type GenerateJsonlLine = (conversation: genericTypes.Conversation) => jsonlTypes.JsonlLine
 
 export const generate: Generate = (ast) => {
-    const jsonl = ast.conversations.map(generateJson).join("\n")
-    return error.resultPass(jsonl)
+    const jsonlLines = ast.conversations.map(generateJsonlLine)
+    const jsonlLinesStrings = jsonlLines.map(jsonlLines => JSON.stringify(jsonlLines))
+    return error.resultPass(jsonlLinesStrings.join("\n"))
 }
 
-const generateJson: GenerateJson = (conversation) => {
+const generateJsonlLine: GenerateJsonlLine = (conversation) => {
     // systemPrompt is an optional node
     const systemPrompt = conversation.systemPrompt as string | undefined
     const messages = conversation.questionAnswerPairs.map((questionAnswerPair) => [
         { role: "user", content: questionAnswerPair.question },
         { role: "assistant", content: questionAnswerPair.answer }
     ]).flat()
-    const json = JSON.stringify({ messages: messages })
-    return json
+    const jsonlLine = { messages: [...systemPrompt === undefined ? [] : [{ role: "system", content: systemPrompt }], ...messages] as jsonlTypes.Message[] }
+    return jsonlLine
 }
