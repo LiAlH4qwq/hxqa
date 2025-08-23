@@ -19,6 +19,14 @@ type ResultError = <E>(error: E) => Result<never, E>
 type ResultUnity = <V, E>(results: (Result<V, never> | Result<never, E>)[]) =>
     Result<V[], never> | Result<never, E[]>
 
+type ResultSolid = <V, E>(result: Result<V, never> | Result<never, E>) => {
+    pass: true
+    value: V
+} | {
+    pass: false
+    error: E
+}
+
 export const resultPass: ResultPass = <V, E>(value: V) => {
     return {
         pass: true,
@@ -43,4 +51,15 @@ export const resultUnity: ResultUnity = <V, E>(results: (Result<V, never> | Resu
     if (errorResults.length >= 1) return resultError(errorResults.map(errorResult => errorResult.out()))
     const passResults = results as Result<V, never>[]
     return resultPass(passResults.map(passResult => passResult.out()))
+}
+
+export const resultSolid: ResultSolid = <V, E>(result: Result<V, never> | Result<never, E>) => {
+    if (result.pass) return {
+        pass: true,
+        value: result.out()
+    }
+    return {
+        pass: false,
+        error: result.out() as E
+    }
 }
