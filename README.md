@@ -1,10 +1,73 @@
 # HXQA
 
+A Library converts a human-writable format to jsonl.
+
+## Basic Usage
+
+```javascript
+import * as hxqa from "hxqa"
+const hxqa = `
+::: Your are a helpful assistant.
+<<< Should I use typescript for my project?
+>>> Yes.
+`
+const result = hxqa.compile(hxqa)
+console.log(result)
+```
+
+## Output Structure
+
+### Compile Success
+
+```typescript
+{
+    pass: true
+    value: string
+}
+```
+
+## Compile Failed
+
+```typescript
+{
+    pass: false
+    error: {
+        stage: "ParsingError"
+        type: "NoTokens"
+    } | ({
+        stage: "ParsingError"
+    } & ({
+        type: "MissingFollowingToken"
+        details: "NoTextAfterInputOrOutput"
+    } | {
+        type: "UnexpectedTokens"
+        details: "TextBeforeIdentifiers"
+    }) | {
+        stage: "AnalyzingError"
+    } | & ({
+        type: "UnexpectedStatements"
+        details: "QuestionOrAnswerBeforeConversation" | "ExpectedInputButGetOutput"
+    } | {
+        type: "MissingFollowingStatements"
+        details: "ConversationMissingQuestionAnswerPairs" | "QuestionMissingAnswer"
+    })) & {
+        mappingInfo: {
+            lineStart: number
+            lineEnd: number
+            columnStart: number
+            columnEnd: number
+        }
+    }
+}
+```
+
+## HXQA Format
+
 Human readable and eXtendable Question Answer pairs format
 
 A simple, clear, and user-friendly format which can be compile to jsonl for AI fine-tuning usage, free you from contacting with jsonl directly
 
-# Basic Syntax
+### Basic Syntax
 
 ```hxqa
 /// this is a comment that will be ignored by the compiler

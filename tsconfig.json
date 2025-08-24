@@ -1,29 +1,40 @@
 {
-  "extends": "@tsconfig/bun/tsconfig.json",
+  "include": [
+    "src/**/*"
+  ],
   "compilerOptions": {
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    "alwaysStrict": true,
+    // false due to strictNullCheck is false
+    "exactOptionalPropertyTypes": false,
+    "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
+    "noImplicitOverride": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "noPropertyAccessFromIndexSignature": true,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    "strict": true,
+    // to omit lot of non-null assert
     "strictNullChecks": false,
+    "allowArbitraryExtensions": false,
     "noUncheckedSideEffectImports": true,
-    "resolveJsonModule": true,
-    "baseUrl": "./src",
-    "paths": {
-      "src/*": [
-        "./*"
-      ],
-      "hxqa/*": [
-        "./hxqa/*"
-      ],
-      "jsonl/*": [
-        "./jsonl/*"
-      ]
-    }
+    "resolveJsonModule": false,
+    "rewriteRelativeImportExtensions": true,
+    "declaration": true,
+    "declarationMap": true,
+    "emitDeclarationOnly": false,
+    "noEmit": true,
+    "noEmitOnError": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "allowJs": false,
+    "erasableSyntaxOnly": false,
+    "forceConsistentCasingInFileNames": true,
+    "esModuleInterop": true,
+    "target": "es2024",
+    "baseUrl": "./src"
   }
 }

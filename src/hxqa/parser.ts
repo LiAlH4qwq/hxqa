@@ -1,10 +1,10 @@
-import * as error from "src/error"
-import * as types from "hxqa/types"
+import * as error from "../error"
+import * as types from "./types"
 
 
 
 type Parse = (tokens: types.Token[]) =>
-    error.Result<types.Statement[], never> | error.Result<never, types.CompilingError[]>
+    error.Result<types.Statement[], types.CompilingError[]>
 
 type RemoveNewLineTokens = (tokens: types.Token[]) => typeof tokens
 

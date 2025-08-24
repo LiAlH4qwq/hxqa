@@ -1,16 +1,28 @@
 {
   "name": "hxqa",
-  "module": "src/index.ts",
-  "devDependencies": {
-    "@tsconfig/bun": "^1.0.8",
-    "@types/bun": "latest"
-  },
+  "version": "v0.1.0",
+  "description": "A Library converts a human-writable format to jsonl.",
+  "keywords": [
+    "jsonl",
+    "ai"
+  ],
+  "license": "MIT",
+  "author": "LiAlH4",
+  "repository": "github:lialh4qwq/hxqa",
+  "homepage": "https://github.com/lialh4/hxqa",
+  "bugs": "https://github.com/lialh4/hxqa/issues",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "files": [
+    "dist/**/*"
+  ],
   "peerDependencies": {
     "typescript": "^5"
   },
-  "private": true,
   "scripts": {
-    "debug": "bun run src/index.ts"
-  },
-  "type": "module"
+    "build-cjs": "tsc -p tsconfig-cjs.json",
+    "build-esm": "tsc -p tsconfig-esm.json",
+    "build": "npm run build-cjs && npm run build-esm",
+    "prepublishOnly": "npm run build"
+  }
 }
