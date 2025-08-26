@@ -1,6 +1,6 @@
-import * as error from "../error"
-import * as hxqaTypes from "./types"
-import * as genericTypes from "../types"
+import * as error from "@/error"
+import * as hxqaTypes from "@hxqa/types"
+import * as genericTypes from "@/types"
 
 type Analyze = (statements: hxqaTypes.Statement[]) =>
     error.Result<genericTypes.AST, never> | error.Result<never, hxqaTypes.CompilingError[]>

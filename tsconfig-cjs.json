@@ -1,9 +1,0 @@
-{
-    "extends": "./tsconfig.json",
-    "compilerOptions": {
-        "noEmit": false,
-        "target": "es2024",
-        "module": "CommonJS",
-        "outDir": "./dist/cjs"
-    },
-}

@@ -1,7 +1,4 @@
 {
-  "include": [
-    "src/**/*"
-  ],
   "compilerOptions": {
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
@@ -22,19 +19,25 @@
     "allowArbitraryExtensions": false,
     "noUncheckedSideEffectImports": true,
     "resolveJsonModule": false,
-    "rewriteRelativeImportExtensions": true,
-    "declaration": true,
-    "declarationMap": true,
-    "emitDeclarationOnly": false,
     "noEmit": true,
-    "noEmitOnError": true,
-    "removeComments": true,
-    "sourceMap": true,
     "allowJs": false,
     "erasableSyntaxOnly": false,
     "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "target": "es2024",
-    "baseUrl": "./src"
-  }
+    "target": "esnext",
+    "baseUrl": "./src",
+    "paths": {
+      "@/*": [
+        "./*"
+      ],
+      "@hxqa/*": [
+        "./hxqa/*"
+      ],
+      "@jsonl/*": [
+        "./jsonl/*"
+      ]
+    }
+  },
+  "include": [
+    "src/**/*"
+  ],
 }

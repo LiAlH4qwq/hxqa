@@ -1,9 +1,9 @@
-import * as error from "./error"
-import * as hxqaTypes from "./hxqa/types"
-import * as hxqaLexer from "./hxqa/lexer"
-import * as hxqaParser from "./hxqa/parser"
-import * as hxqaAnalyzer from "./hxqa/analyzer"
-import * as jsonlGenerator from "./jsonl/generator"
+import * as error from "@/error"
+import * as hxqaTypes from "@hxqa/types"
+import * as hxqaLexer from "@hxqa/lexer"
+import * as hxqaParser from "@hxqa/parser"
+import * as hxqaAnalyzer from "@hxqa/analyzer"
+import * as jsonlGenerator from "@jsonl/generator"
 
 type Compile = (hxqa: string) => error.SolidResult<string, hxqaTypes.CompilingError[]>
 

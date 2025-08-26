@@ -1,5 +1,5 @@
-import * as error from "../error"
-import * as types from "./types"
+import * as error from "@/error"
+import * as types from "@hxqa/types"
 
 type Lex = (hxqa: string) => error.Result<types.Token[], never>
 

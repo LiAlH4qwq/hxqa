@@ -1,6 +1,6 @@
-import * as error from "../error"
-import * as jsonlTypes from "./types"
-import * as genericTypes from "../types"
+import * as error from "@/error"
+import * as jsonlTypes from "@jsonl/types"
+import * as genericTypes from "@/types"
 
 type Generate = (ast: genericTypes.AST) => error.Result<string, never>
 
