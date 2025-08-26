@@ -1,25 +1,26 @@
-import * as error from "@/error"
-import * as types from "@hxqa/types"
+import { Result, resultPass } from "@/error"
+import { Token } from "@hxqa/types"
 
-type Lex = (hxqa: string) => error.Result<types.Token[], never>
+type Lex = (hxqa: string) => Result<Token[], never>
 
-type LexLine = (line: string, lineNum: number) => types.Token[]
+type LexLine = (line: string, lineNum: number) => Token[]
 
 type TokenNoValue = (
     id: "\n" | ":::" | "<<<" | ">>>" | "///",
     lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
-) => types.Token
+) => Token
 
 type TokenContent = (
     value: string,
     lineStart: number, lineEnd: number, columnStart: number, columnEnd: number
-) => types.Token
+) => Token
 
 export const lex: Lex = (hxqa) => {
+    if (hxqa.trim() === "") return resultPass([])
     const lines = hxqa.split("\n")
     const tokensInLines = lines.map((line, lineIndex) => lexLine(line, lineIndex + 1))
     const tokens = tokensInLines.flat()
-    return error.resultPass(tokens)
+    return resultPass(tokens)
 }
 
 const lexLine: LexLine = (line, lineNum) => {

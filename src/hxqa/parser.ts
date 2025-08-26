@@ -1,40 +1,37 @@
-import * as error from "@/error"
-import * as types from "@hxqa/types"
+import { Result, resultPass, resultError, resultUnity } from "@/error"
+import { Statement, CompilingError } from "@/types"
+import { Token } from "@hxqa/types"
 
+type Parse = (tokens: Token[]) => Result<Statement[], CompilingError[]>
 
+type RemoveNewLineTokens = (tokens: Token[]) => typeof tokens
 
-type Parse = (tokens: types.Token[]) =>
-    error.Result<types.Statement[], types.CompilingError[]>
+type TryFormingStatements =
+    (accumulatedResults: Result<Statement, CompilingError>[], tokens: Token[]) =>
+        [results: typeof accumulatedResults, restTokens: typeof tokens]
 
-type RemoveNewLineTokens = (tokens: types.Token[]) => typeof tokens
+type TryFormingStatement = (tokens: Token[]) =>
+    [result: Result<Statement, CompilingError>, restTokens: typeof tokens]
 
-type TryFormingStatements = (accumulatedResults: (
-    error.Result<types.Statement, never> | error.Result<never, types.CompilingError>)[],
-    tokens: types.Token[]) =>
-    [results: typeof accumulatedResults, restTokens: typeof tokens]
-
-type TryFormingStatement = (tokens: types.Token[]) =>
-    [result: error.Result<types.Statement, never> | error.Result<never, types.CompilingError>,
-        restTokens: typeof tokens]
-
-type CollectingText = (accumulatedTexts: string[], tokens: types.Token[]) =>
+type CollectingText = (accumulatedTexts: string[], tokens: Token[]) =>
     [texts: typeof accumulatedTexts, restTokens: typeof tokens]
 
 export const parse: Parse = (tokens) => {
-    if (tokens.length <= 0) return error.resultError([{
+    if (tokens.length <= 0) return resultError([{
         stage: "ParsingError",
         type: "NoTokens"
     }])
     // to preserve line mapping info
     // token list produce by lexer may have newline token at the heading
     // it's not error, just remove it
-    const tokensRemovedHeadingNewLines = removeNewLineTokens(tokens)
-    if (tokensRemovedHeadingNewLines.length <= 0) return error.resultError([{
+    const tokensRemovedHeadingNewLines =
+        removeNewLineTokens(tokens)
+    if (tokensRemovedHeadingNewLines.length <= 0) return resultError([{
         stage: "ParsingError",
         type: "NoTokens"
     }])
     const [results, _] = tryFormingStatements([], tokensRemovedHeadingNewLines)
-    return error.resultUnity(results)
+    return resultUnity(results)
 }
 
 const removeNewLineTokens: RemoveNewLineTokens = (tokens) => {
@@ -61,7 +58,7 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
         const [texts, restTokens] = collectingText([], tokens)
         const textTokenCount = texts.length
         const textEndingToken = tokens[textTokenCount - 1]
-        return [error.resultError({
+        return [resultError({
             stage: "ParsingError",
             type: "UnexpectedTokens",
             details: "TextBeforeIdentifiers",
@@ -77,14 +74,14 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
     const text = texts.join("").trim()
     const textTokenCount = texts.length
     if (text === "" && (currentToken.type === "inputId" || currentToken.type === "outputId"))
-        return [error.resultError({
+        return [resultError({
             stage: "ParsingError",
-            type: "MissingFollowingToken",
+            type: "MissingFollowingTokens",
             details: "NoTextAfterInputOrOutput",
             mappingInfo: currentToken.mappingInfo,
         }), restTokens]
     else if (text === "" && (currentToken.type === "startId" || currentToken.type === "commentId"))
-        return [error.resultPass({
+        return [resultPass({
             type: currentToken.type === "startId" ? "start" : "comment",
             mappingInfo: {
                 lineStart: currentToken.mappingInfo.lineStart,
@@ -95,7 +92,7 @@ const tryFormingStatement: TryFormingStatement = (tokens) => {
         }), restTokens]
     else {
         const textEndingToken = tokens[textTokenCount]
-        return [error.resultPass({
+        return [resultPass({
             type: currentToken.type.slice(0, -2) as "start" | "input" | "output" | "comment",
             value: text,
             mappingInfo: {

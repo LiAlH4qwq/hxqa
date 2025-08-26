@@ -24,20 +24,21 @@
     "erasableSyntaxOnly": false,
     "forceConsistentCasingInFileNames": true,
     "target": "esnext",
-    "baseUrl": "./src",
+    "baseUrl": "./",
     "paths": {
       "@/*": [
-        "./*"
+        "./src/*"
       ],
       "@hxqa/*": [
-        "./hxqa/*"
+        "./src/hxqa/*"
       ],
       "@jsonl/*": [
-        "./jsonl/*"
+        "./src/jsonl/*"
       ]
     }
   },
   "include": [
-    "src/**/*"
+    "./src/**/*",
+    "./tests/**/*"
   ],
 }

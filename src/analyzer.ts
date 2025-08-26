@@ -1,37 +1,40 @@
-import * as error from "@/error"
-import * as hxqaTypes from "@hxqa/types"
-import * as genericTypes from "@/types"
+import { Result, resultPass, resultError, resultUnity } from "@/error"
+import {
+    Statement,
+    QuestionAnswerPair,
+    Conversation,
+    AST,
+    CompilingError,
+    MappingInfo
+} from "@/types"
 
-type Analyze = (statements: hxqaTypes.Statement[]) =>
-    error.Result<genericTypes.AST, never> | error.Result<never, hxqaTypes.CompilingError[]>
+type Analyze = (statements: Statement[]) => Result<AST, CompilingError[]>
 
 type RemoveInvalidQuestionAnswerStatements =
-    (accumulatedMappingInfo: hxqaTypes.MappingInfo, statements: hxqaTypes.Statement[]) =>
+    (accumulatedMappingInfo: MappingInfo, statements: Statement[]) =>
         [mappingInfo: typeof accumulatedMappingInfo, restStatements: typeof statements]
 
-type TryFormingConversations = (accumulatedResults: (error.Result<genericTypes.Conversation, never> |
-    error.Result<never, hxqaTypes.CompilingError[]>)[],
-    statements: hxqaTypes.Statement[]) =>
-    [results: typeof accumulatedResults, restStatements: typeof statements]
-
-type TryFormingConversation = (statements: hxqaTypes.Statement[]) =>
-    [result: error.Result<genericTypes.Conversation, never> |
-        error.Result<never, hxqaTypes.CompilingError[]>, restStatements: typeof statements]
-
-type TryFormingQuestionAnswerPairs =
-    (accumulatedResults: (error.Result<genericTypes.QuestionAnswerPair, never> |
-        error.Result<never, hxqaTypes.CompilingError>)[],
-        statements: hxqaTypes.Statement[]) =>
+type TryFormingConversations =
+    (accumulatedResults: (Result<Conversation, CompilingError[]>)[], statements: Statement[]) =>
         [results: typeof accumulatedResults, restStatements: typeof statements]
 
-type TryFormingQuestionAnswerPair = (statements: hxqaTypes.Statement[]) =>
-    [result: error.Result<genericTypes.QuestionAnswerPair, never> |
-        error.Result<never, hxqaTypes.CompilingError>, restStatements: typeof statements]
+type TryFormingConversation = (statements: Statement[]) =>
+    [result: Result<Conversation, CompilingError[]>, restStatements: typeof statements]
+
+type TryFormingQuestionAnswerPairs =
+    (accumulatedResults: (Result<QuestionAnswerPair, CompilingError>)[], statements: Statement[]) =>
+        [results: typeof accumulatedResults, restStatements: typeof statements]
+
+type TryFormingQuestionAnswerPair = (statements: Statement[]) =>
+    [result: Result<QuestionAnswerPair, CompilingError>, restStatements: typeof statements]
 
 export const analyze: Analyze = (statements) => {
-    const statementsWithoutComments = statements.filter(statement => statement.type !== "comment")
+    const statementsWithoutComments =
+        statements.filter(statement => statement.type !== "comment")
     const [results, _] = tryFormingConversations([], statementsWithoutComments)
-    return error.resultUnity(results).then(conversations => error.resultPass({ conversations: conversations })).transError((errorsofErrors) => errorsofErrors.flat())
+    return resultUnity(results)
+        .then(conversations => resultPass({ conversations: conversations }))
+        .transError((errorsOfErrors) => errorsOfErrors.flat())
 }
 
 const removeInvalidQuestionAnswerStatements: RemoveInvalidQuestionAnswerStatements = (acc, stmts) => {
@@ -65,7 +68,7 @@ const tryFormingConversation: TryFormingConversation = (statements) => {
     if (currentStatement.type !== "start") {
         const [mappingInfo, restStatements] = removeInvalidQuestionAnswerStatements(
             currentStatement.mappingInfo, statements.slice(1))
-        return [error.resultError([{
+        return [resultError([{
             stage: "AnalyzingError",
             type: "UnexpectedStatements",
             details: "QuestionOrAnswerBeforeConversation",
@@ -75,16 +78,15 @@ const tryFormingConversation: TryFormingConversation = (statements) => {
     // value of start statement is optional, so it maybe string or undefined
     const systemPrompt = currentStatement.value as string | undefined
     const [results, restStatements] = tryFormingQuestionAnswerPairs([], statements.slice(1))
-    if (results.length <= 0) return [error.resultError([{
+    if (results.length <= 0) return [resultError([{
         stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "ConversationMissingQuestionAnswerPairs",
         mappingInfo: currentStatement.mappingInfo
-    }])
-        , restStatements]
-    return [error.resultUnity(results).then(
+    }]), restStatements]
+    return [resultUnity(results).then(
         (questionAnswerPairs) =>
-            error.resultPass(systemPrompt === undefined ?
+            resultPass(systemPrompt === undefined ?
                 { questionAnswerPairs: questionAnswerPairs } :
                 { systemPrompt: systemPrompt, questionAnswerPairs: questionAnswerPairs }))
         , restStatements]
@@ -100,19 +102,19 @@ const tryFormingQuestionAnswerPairs: TryFormingQuestionAnswerPairs = (accumulate
 }
 
 const tryFormingQuestionAnswerPair: TryFormingQuestionAnswerPair = (statements) => {
-    if (statements[0].type !== "input") return [error.resultError({
+    if (statements[0].type !== "input") return [resultError({
         stage: "AnalyzingError",
         type: "UnexpectedStatements",
         details: "ExpectedInputButGetOutput",
         mappingInfo: statements[0].mappingInfo
     }), statements.slice(1)]
-    if (statements.length <= 1 || statements[1].type !== "output") return [error.resultError({
+    if (statements.length <= 1 || statements[1].type !== "output") return [resultError({
         stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "QuestionMissingAnswer",
         mappingInfo: statements[0].mappingInfo
     }), statements.slice(1)]
-    return [error.resultPass({
+    return [resultPass({
         question: statements[0].value,
         answer: statements[1].value
     }), statements.slice(2)]
