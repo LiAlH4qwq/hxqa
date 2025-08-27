@@ -1,6 +1,6 @@
 {
   "name": "hxqa",
-  "version": "v0.2.0",
+  "version": "0.2.0",
   "description": "A Library converts between a human-writable format and jsonl.",
   "keywords": [
     "bun",
@@ -17,7 +17,7 @@
   "main": "src/index.ts",
   "module": "src/index.ts",
   "engines": {
-    "bun": "*"
+    "bun": ">1.0.0"
   },
   "files": [
     "src/**/*"
