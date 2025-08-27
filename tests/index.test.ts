@@ -5,7 +5,7 @@ import { lex as lexHxqa } from "@/hxqa/lexer";
 import { parse as parseHxqa } from "@/hxqa/parser";
 import { lex as lexJsonl } from "@/jsonl/lexer";
 import { parse as parseJsonl } from "@/jsonl/parser";
-import { generate, generate as generateHxqa } from "@/hxqa/generator";
+import { generate as generateHxqa } from "@/hxqa/generator";
 import { generate as generateJsonl } from "@/jsonl/generator";
 
 describe("test hxqa to jsonl", () => {

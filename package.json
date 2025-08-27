@@ -16,11 +16,9 @@
   "bugs": "https://github.com/lialh4/hxqa/issues",
   "main": "src/index.ts",
   "module": "src/index.ts",
-  {
-    "engines": {
-      "bun": "*"
-    }
-  }
+  "engines": {
+    "bun": "*"
+  },
   "files": [
     "src/**/*"
   ],
