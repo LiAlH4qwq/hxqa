@@ -1,7 +1,8 @@
-import { Result, resultPass } from "@/error"
+import { Result, resultError, resultPass } from "@/error"
+import { CompilingError } from "@/types"
 import { Token } from "@hxqa/types"
 
-type Lex = (hxqa: string) => Result<Token[], never>
+type Lex = (hxqa: string) => Result<Token[], CompilingError[]>
 
 type LexLine = (line: string, lineNum: number) => Token[]
 
@@ -16,7 +17,10 @@ type TokenContent = (
 ) => Token
 
 export const lex: Lex = (hxqa) => {
-    if (hxqa.trim() === "") return resultPass([])
+    if (hxqa.trim() === "") return resultError([{
+        stage: "LexingError",
+        type: "EmptyFile"
+    }])
     const lines = hxqa.split("\n")
     const tokensInLines = lines.map((line, lineIndex) => lexLine(line, lineIndex + 1))
     const tokens = tokensInLines.flat()

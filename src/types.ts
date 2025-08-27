@@ -27,6 +27,9 @@ export type MappingInfo = {
 }
 
 export type CompilingError = {
+    stage: "LexingError"
+    type: "EmptyFile"
+} | {
     stage: "ParsingError"
     type: "NoTokens"
 } | ({

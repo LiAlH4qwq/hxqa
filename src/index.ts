@@ -1,5 +1,5 @@
 import { SolidResult, resultPass, resultSolid } from "@/error"
-import { CompilingError, AST } from "@/types"
+import { CompilingError } from "@/types"
 import { analyze } from "@/analyzer"
 import { lex as lexHxqa } from "@hxqa/lexer"
 import { parse as parseHxqa } from "@hxqa/parser"

@@ -1,91 +1,76 @@
 # HXQA
 
-A Library converts a human-writable format to jsonl.
+A Library converts between HXQA, a human-writable format, and jsonl.
+
+## NOTICE
+
+This is a Bun-only library that can only be used with Bun!
+
+## Introduction to HXQA Format
+
+HXQA, means Human-writable eXtendable Question-Answer format,
+ corresponding to it's name, is a human-writable format
+ that compiles to jsonl, let you write ai finetuning dataset easier.
+
+### HXQA Syntax
+
+```hxqa
+::: This is a conversation start identifier, and this sentence is system prompt.
+<<< This is a input identifier, and this sentence will be assistant message of jsonl.
+>>> This is a output identifier, and this sentence will be user message of jsonl
+/// This is a comment identifier, will be ignore by the compiler
+<<<
+The identifier and the text can be on different line.
+>>>
+And input-output statements must occurs in turn.
+/// Next line starts a new conversation, without system prompt
+:::
+<<<
+All Text can be multi-line
+like this.
+>>>
+Every line will be trimmed
+and the entire text in statement will be trimmed too 
+```
 
 ## Basic Usage
 
-```javascript
-import * as hxqa from "hxqa"
+HXQA -> jsonl
+
+```typescript
+import { compile } from "hxqa"
 const hxqa = `
 ::: Your are a helpful assistant.
-<<< Should I use typescript for my project?
->>> Yes.
+<<< Hi!
+>>> Hi there!
 `
-const result = hxqa.compile(hxqa)
-console.log(result)
+const result = compile(hxqa)
+if (result.pass) console.log(result.value)
+else console.log(result.error)
 ```
 
-## Output Structure
-
-### Compile Success
+jsonl -> HXQA
 
 ```typescript
-{
-    pass: true
-    value: string
-}
-```
-
-## Compile Failed
-
-```typescript
-{
-    pass: false
-    error: {
-        stage: "ParsingError"
-        type: "NoTokens"
-    } | ({
-        stage: "ParsingError"
-    } & ({
-        type: "MissingFollowingToken"
-        details: "NoTextAfterInputOrOutput"
-    } | {
-        type: "UnexpectedTokens"
-        details: "TextBeforeIdentifiers"
-    }) | {
-        stage: "AnalyzingError"
-    } | & ({
-        type: "UnexpectedStatements"
-        details: "QuestionOrAnswerBeforeConversation" | "ExpectedInputButGetOutput"
-    } | {
-        type: "MissingFollowingStatements"
-        details: "ConversationMissingQuestionAnswerPairs" | "QuestionMissingAnswer"
-    })) & {
-        mappingInfo: {
-            lineStart: number
-            lineEnd: number
-            columnStart: number
-            columnEnd: number
+import { decompile } from "hxqa"
+const json = {
+    messages: [
+        {
+            role: "system",
+            content: "You are a helpful assistant"
+        },
+        {
+            role: "user",
+            content: "Hi!"
+        },
+        {
+            role: "assistant",
+            content: "Hi there!"
         }
-    }
+    ]
 }
-```
-
-## HXQA Format
-
-Human readable and eXtendable Question Answer pairs format
-
-A simple, clear, and user-friendly format which can be compile to jsonl for AI fine-tuning usage, free you from contacting with jsonl directly
-
-### Basic Syntax
-
-```hxqa
-/// this is a comment that will be ignored by the compiler
-::: a short system prompt
-<<<a short input with no space before identifier
->>>
-
-a long and multi-line output
-balabala
-...
-
-/// new-line before and after content will also be ignored
-<<<
-another long but single-line input
->>> a short output
-
-:::
-/// another conversation with no system prompt
-<<< hi there
->>> hello hxqa
+const jsonl = JSON.stringify(json)
+const result = decompile(jsonl)
+if (result.pass) console.log(result.value)
+else console.log(result.error)
 ```
