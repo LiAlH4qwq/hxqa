@@ -20,7 +20,8 @@
     "bun": ">1.0.0"
   },
   "files": [
-    "src/**/*"
+    "src/**/*",
+    "tsconfig.json"
   ],
   "devDependencies": {
     "@types/bun": "latest"
