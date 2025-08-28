@@ -2,6 +2,9 @@
 
 A Library converts between HXQA, a human-writable format, and jsonl.
 
+![NPM](https://img.shields.io/npm/v/hxqa?style=for-the-badge)
+![LICENSE](https://img.shields.io/badge/LICENSE-MIT-brightgreen?style=for-the-badge)
+
 ## NOTICE
 
 This is a Bun-only library that can only be used with Bun!
