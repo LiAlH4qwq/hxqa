@@ -55,7 +55,7 @@ export type CompilingError = {
     | "JsonObjectMessagesChildNotAllIsMessage"
 }) | {
     stage: "AnalyzingError"
-} | & ({
+} & ({
     type: "UnexpectedStatements"
     details: "QuestionOrAnswerBeforeConversation" | "ExpectedInputButGetOutput"
 } | {

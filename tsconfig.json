@@ -2,8 +2,7 @@
   "compilerOptions": {
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
-    // false due to strictNullCheck is false
-    "exactOptionalPropertyTypes": false,
+    "exactOptionalPropertyTypes": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": true,
     "noImplicitOverride": true,
@@ -14,8 +13,6 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "strict": true,
-    // to omit lot of non-null assert
-    "strictNullChecks": false,
     "allowArbitraryExtensions": false,
     "noUncheckedSideEffectImports": true,
     "resolveJsonModule": false,
@@ -24,6 +21,7 @@
     "erasableSyntaxOnly": false,
     "forceConsistentCasingInFileNames": true,
     "target": "esnext",
+    "module": "esnext",
     "baseUrl": "./",
     "paths": {
       "@/*": [

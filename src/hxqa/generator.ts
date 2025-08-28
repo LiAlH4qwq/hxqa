@@ -20,19 +20,19 @@ export const generate: Generate = (ast) => {
 
 const generateConversations: GenerateConversations = (accParts, conversations, offset) => {
     if (offset >= conversations.length) return [accParts, -1]
-    const parts = generateConversation(conversations.at(offset))
+    const parts = generateConversation(conversations.at(offset)!)
     const newParts = [...accParts, ...parts]
     return generateConversations(newParts, conversations, offset + 1)
 }
 
 const generateConversation: GenerateConversation = (conversation) => {
     const [parts, _] = generateQAPairs([], conversation.questionAnswerPairs, 0)
-    return conversation.systemPrompt === undefined ? parts : [":::", conversation.systemPrompt, "", ...parts]
+    return conversation.systemPrompt === undefined ? [":::", "", ...parts] : [":::", conversation.systemPrompt, "", ...parts]
 }
 
 const generateQAPairs: GenerateQAParirs = (accParts, qaPairs, offset) => {
     if (offset >= qaPairs.length) return [accParts, -1]
-    const qaPair = qaPairs.at(offset)
+    const qaPair = qaPairs.at(offset)!
     const parts = ["<<<", qaPair.question, "", ">>>", qaPair.answer, ""]
     const newParts = [...accParts, ...parts]
     return generateQAPairs(newParts, qaPairs, offset + 1)

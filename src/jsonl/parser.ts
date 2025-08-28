@@ -17,8 +17,8 @@ export const parse: Parse = (jsonlLines) => {
         .then(stmtsOfStmts => {
             // if staments stream produce by a line of jsonl don't cotains a start statement
             // pre-attend it so analyzer can determine conversation starting
-            const fixedStmtsOfStmts = stmtsOfStmts.map(stmts => stmts.at(0).type === "start" ? stmts :
-                [{ type: "start", mappingInfo: stmts.at(0).mappingInfo }, ...stmts]) as Statement[][]
+            const fixedStmtsOfStmts = stmtsOfStmts.map(stmts => stmts.at(0)!.type === "start" ? stmts :
+                [{ type: "start", mappingInfo: stmts.at(0)!.mappingInfo }, ...stmts]) as Statement[][]
             return resultPass(fixedStmtsOfStmts.flat())
         })
 }
@@ -35,7 +35,8 @@ const parseJsonlLine: ParseJsonlLine = (jsonlLine) => {
         }
         return resultError(compilingError)
     }
-    const keys = Object.keys(value)
+    const valueAsObj = value as object
+    const keys = Object.keys(valueAsObj)
     if (keys.length !== 1 && keys.at(0) !== "messages") {
         const compilingError: CompilingError = {
             stage: "ParsingError",
@@ -45,7 +46,7 @@ const parseJsonlLine: ParseJsonlLine = (jsonlLine) => {
         }
         return resultError(compilingError)
     }
-    const objectOfMessages = value as { messages: unknown }
+    const objectOfMessages = valueAsObj as { messages: unknown }
     const messagesProp: UnknownStructrue = {
         value: objectOfMessages.messages,
         mappingInfo
@@ -85,7 +86,8 @@ const parseMessagesProp: ParseMessagesProp = (messagesProp) => {
         return resultError(compilingError)
     }
     if (!valueAsArray.every(child => {
-        const keys = Object.keys(child)
+        const childAsObj = child as object
+        const keys = Object.keys(childAsObj)
         const isKeysMatch = keys.length === 2
             && keys.includes("role")
             && keys.includes("content")
@@ -116,7 +118,7 @@ const parseMessages: ParseMessages = (accStmts, messages, offset) => {
     const value = messages.value
     const mappingInfo = messages.mappingInfo
     if (offset >= value.length) return [accStmts, -1]
-    const message = value.at(offset)
+    const message = value.at(offset)!
     const role = message.role
     // trim whole string and trim by each line
     // make bahavior consistent with hxqa lexer

@@ -30,7 +30,8 @@ export const parse: Parse = (tokens) => {
 }
 
 const removeNewLineTokens: RemoveNewLineTokens = (tokens, offset) => {
-    if (tokens.at(offset).type !== "newLine") return offset
+    const curToken = tokens.at(offset)
+    if (curToken === undefined || curToken.type !== "newLine") return offset
     return removeNewLineTokens(tokens, offset + 1)
 }
 
@@ -41,7 +42,7 @@ const tryFormingStatements: TryFormingStatements = (accumulatedResults, tokens, 
 }
 
 const tryFormingStatement: TryFormingStatement = (tokens, offset) => {
-    const currentToken = tokens.at(offset)
+    const curToken = tokens.at(offset)!
     // all non-id tokens after id tokens
     // should be comsumed after forming statements
     // so if non-id tokens appears here
@@ -49,49 +50,49 @@ const tryFormingStatement: TryFormingStatement = (tokens, offset) => {
     // so deal with it, return a error result
     // and continue parsing
     // for checking other possible errors
-    if (currentToken.type === "content" || currentToken.type === "newLine") {
+    if (curToken.type === "content" || curToken.type === "newLine") {
         const [_, newOffset] = collectingText([], tokens, offset)
-        const textEndingToken = tokens.at(newOffset - 1)
+        const textEndingToken = tokens.at(newOffset - 1)!
         return [resultError({
             stage: "ParsingError",
             type: "UnexpectedTokens",
             details: "TextBeforeIdentifiers",
             mappingInfo: {
-                lineStart: currentToken.mappingInfo.lineStart,
+                lineStart: curToken.mappingInfo.lineStart,
                 lineEnd: textEndingToken.mappingInfo.lineEnd,
-                columnStart: currentToken.mappingInfo.columnStart,
+                columnStart: curToken.mappingInfo.columnStart,
                 columnEnd: textEndingToken.mappingInfo.columnEnd
             }
         }), newOffset]
     }
     const [texts, newOffset] = collectingText([], tokens, offset + 1)
     const text = texts.join("").trim()
-    if (text === "" && (currentToken.type === "inputId" || currentToken.type === "outputId"))
+    if (text === "" && (curToken.type === "inputId" || curToken.type === "outputId"))
         return [resultError({
             stage: "ParsingError",
             type: "MissingFollowingTokens",
             details: "NoTextAfterInputOrOutput",
-            mappingInfo: currentToken.mappingInfo,
+            mappingInfo: curToken.mappingInfo,
         }), newOffset]
-    else if (text === "" && (currentToken.type === "startId" || currentToken.type === "commentId"))
+    else if (text === "" && (curToken.type === "startId" || curToken.type === "commentId"))
         return [resultPass({
-            type: currentToken.type === "startId" ? "start" : "comment",
+            type: curToken.type === "startId" ? "start" : "comment",
             mappingInfo: {
-                lineStart: currentToken.mappingInfo.lineStart,
-                lineEnd: currentToken.mappingInfo.lineEnd,
-                columnStart: currentToken.mappingInfo.columnStart,
-                columnEnd: currentToken.mappingInfo.columnEnd
+                lineStart: curToken.mappingInfo.lineStart,
+                lineEnd: curToken.mappingInfo.lineEnd,
+                columnStart: curToken.mappingInfo.columnStart,
+                columnEnd: curToken.mappingInfo.columnEnd
             }
         }), newOffset]
     else {
-        const textEndingToken = tokens.at(newOffset - 1)
+        const textEndingToken = tokens.at(newOffset - 1)!
         return [resultPass({
-            type: currentToken.type.slice(0, -2) as "start" | "input" | "output" | "comment",
+            type: curToken.type.slice(0, -2) as "start" | "input" | "output" | "comment",
             value: text,
             mappingInfo: {
-                lineStart: currentToken.mappingInfo.lineStart,
+                lineStart: curToken.mappingInfo.lineStart,
                 lineEnd: textEndingToken.mappingInfo.lineEnd,
-                columnStart: currentToken.mappingInfo.columnStart,
+                columnStart: curToken.mappingInfo.columnStart,
                 columnEnd: textEndingToken.mappingInfo.columnEnd
             }
         }), newOffset]
@@ -101,11 +102,11 @@ const tryFormingStatement: TryFormingStatement = (tokens, offset) => {
 const collectingText: CollectingText = (accumulatedText, tokens, offset) => {
     // may reach the end of token list
     if (offset >= tokens.length) return [accumulatedText, offset]
-    const currentToken = tokens.at(offset)
+    const curToken = tokens.at(offset)!
     // or meet id token
     // both means text collecting end
-    if (!(currentToken.type === "content" || currentToken.type === "newLine"))
+    if (!(curToken.type === "content" || curToken.type === "newLine"))
         return [accumulatedText, offset]
-    const currentText = currentToken.type === "newLine" ? "\n" : currentToken.value
+    const currentText = curToken.type === "newLine" ? "\n" : curToken.value
     return collectingText([...accumulatedText, currentText], tokens, offset + 1)
 }

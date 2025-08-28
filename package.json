@@ -1,6 +1,6 @@
 {
   "name": "hxqa",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A Library converts between a human-writable format and jsonl.",
   "keywords": [
     "bun",

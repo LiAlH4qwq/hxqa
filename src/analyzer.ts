@@ -44,7 +44,7 @@ const removeInvalidQuestionAnswerStatements: RemoveInvalidQuestionAnswerStatemen
     // eg. there's no conversation start statement in the stream
     if (offset >= stmts.length) return [acc, offset]
     // reach conversation start statement, done
-    const curStmt = stmts.at(offset)
+    const curStmt = stmts.at(offset)!
     if (curStmt.type === "start") return [acc, offset]
     const newAcc = {
         ...acc,
@@ -61,16 +61,16 @@ const tryFormingConversations: TryFormingConversations = (accumulatedResults, st
 }
 
 const tryFormingConversation: TryFormingConversation = (statements, offset) => {
-    const currentStatement = statements.at(offset)
+    const curStmt = statements.at(offset)!
     // all non-start statement should be consumed
     // after forming conversation
     // so if them appears here
     // it can only be those at the heading of statement stream
     // deal with them, return an error
     // and continue analyzing to find rest possible errors
-    if (currentStatement.type !== "start") {
+    if (curStmt.type !== "start") {
         const [mappingInfo, newOffset] = removeInvalidQuestionAnswerStatements(
-            currentStatement.mappingInfo, statements, offset)
+            curStmt.mappingInfo, statements, offset)
         return [resultError([{
             stage: "AnalyzingError",
             type: "UnexpectedStatements",
@@ -79,13 +79,13 @@ const tryFormingConversation: TryFormingConversation = (statements, offset) => {
         }]), newOffset]
     }
     // value of start statement is optional, so it maybe string or undefined
-    const systemPrompt = currentStatement.value as string | undefined
+    const systemPrompt = curStmt.value as string | undefined
     const [results, newOffset] = tryFormingQuestionAnswerPairs([], statements, offset + 1)
     if (results.length <= 0) return [resultError([{
         stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "ConversationMissingQuestionAnswerPairs",
-        mappingInfo: currentStatement.mappingInfo
+        mappingInfo: curStmt.mappingInfo
     }]), newOffset]
     return [resultUnity(results).then(
         (questionAnswerPairs) =>
@@ -98,14 +98,14 @@ const tryFormingConversation: TryFormingConversation = (statements, offset) => {
 const tryFormingQuestionAnswerPairs: TryFormingQuestionAnswerPairs = (accumulatedResults, statements, offset) => {
     // may reach the end of statement stream
     if (offset >= statements.length) return [accumulatedResults, offset]
-    const currentStatement = statements.at(offset)
-    if (currentStatement.type === "start") return [accumulatedResults, offset]
+    const curStmt = statements.at(offset)!
+    if (curStmt.type === "start") return [accumulatedResults, offset]
     const [result, newOffset] = tryFormingQuestionAnswerPair(statements, offset)
     return tryFormingQuestionAnswerPairs([...accumulatedResults, result], statements, newOffset)
 }
 
 const tryFormingQuestionAnswerPair: TryFormingQuestionAnswerPair = (statements, offset) => {
-    const maybeQ = statements.at(offset)
+    const maybeQ = statements.at(offset)!
     const maybeA = statements.at(offset + 1)
     if (maybeQ.type !== "input") return [resultError({
         stage: "AnalyzingError",
@@ -113,14 +113,14 @@ const tryFormingQuestionAnswerPair: TryFormingQuestionAnswerPair = (statements, 
         details: "ExpectedInputButGetOutput",
         mappingInfo: maybeQ.mappingInfo
     }), offset + 1]
-    if (offset >= statements.length - 1 || maybeA.type !== "output") return [resultError({
+    if (offset >= statements.length - 1 || maybeA!.type !== "output") return [resultError({
         stage: "AnalyzingError",
         type: "MissingFollowingStatements",
         details: "QuestionMissingAnswer",
-        mappingInfo: statements[0].mappingInfo
+        mappingInfo: maybeQ.mappingInfo
     }), offset + 1]
     return [resultPass({
         question: maybeQ.value,
-        answer: maybeA.value
+        answer: maybeA!.value
     }), offset + 2]
 }
