@@ -21,6 +21,7 @@
   },
   "files": [
     "src/**/*",
+    "dist/**/*",
     "tsconfig.json"
   ],
   "devDependencies": {
@@ -28,5 +29,8 @@
   },
   "peerDependencies": {
     "typescript": "^5"
+  },
+  "scripts": {
+    "prepublishOnly": "tsc"
   }
 }
