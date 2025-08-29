@@ -1,6 +1,6 @@
 {
   "name": "hxqa",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "description": "A Library converts between a human-writable format and jsonl.",
   "keywords": [
     "bun",
@@ -16,6 +16,7 @@
   "bugs": "https://github.com/lialh4/hxqa/issues",
   "main": "src/index.ts",
   "module": "src/index.ts",
+  "types": "dist/index.d.ts",
   "engines": {
     "bun": ">1.0.0"
   },
@@ -31,6 +32,6 @@
     "typescript": "^5"
   },
   "scripts": {
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "bun x tsc"
   }
 }
